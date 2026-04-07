@@ -1,0 +1,37 @@
+name: Build Pingora for ARM64 (aarch64)
+
+on:
+  workflow_dispatch:  # 允许手动点击运行
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: aarch64-unknown-linux-gnu  # 关键：ARM64 目标
+
+      - name: Install ARM compiler
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-aarch64-linux-gnu libssl-dev pkg-config perl
+
+      - name: Clone Pingora
+        run: git clone https://github.com/cloudflare/pingora.git
+
+      - name: Build for ARM64
+        run: |
+          cd pingora
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+          cargo build --release --target aarch64-unknown-linux-gnu
+
+      - name: Upload ARM64 Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: pingora-linux-arm64
+          path: pingora/target/aarch64-unknown-linux-gnu/release/pingora
